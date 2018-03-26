@@ -1,2 +1,2 @@
 # md-fingerprint
-A nom package for using GT-521FXX fingerprint modules.
+A npm package for using GT-521FXX fingerprint modules.
