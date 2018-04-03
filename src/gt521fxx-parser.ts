@@ -7,17 +7,15 @@ export class GT521Parser extends Transform {
     dataPacketLength: number;
     constructor() {
         var options = {
-            objectMode: true,
-            includeDelimiter: false
+            objectMode: false
         }
         super(options)
         this.dataPacketLength = 0;
-        this.buffer = Buffer.alloc(0)
+        this.buffer = Buffer.alloc(0);
     }
 
     _transform(chunk: any, encoding: string, callback: Function): void {
         var data = Buffer.concat([this.buffer, chunk]);
-        // console.log(data);
         if (data[0] == PacketCode.Response.StartCode1 && data[1] == PacketCode.Response.StartCode2 && data.length >= 12) {
             var responseBuffer = new Buffer(data.slice(0, 12));
             var responsePacket = new ResponsePacket(responseBuffer);
@@ -28,7 +26,6 @@ export class GT521Parser extends Transform {
 
         }
         var packetLength = this.dataPacketLength;
-
         if (data[0] == PacketCode.Data.StartCode1 && data[1] == PacketCode.Data.StartCode2 && data.length >= packetLength) {
             var dataBuffer = data.slice(0, packetLength);
             var dataPacket = new DataPacket(dataBuffer);
