@@ -1,11 +1,12 @@
 import { ErrorCode, PacketKind, ResponseType, PacketCode, DeviceID, CommandCode } from "./gt521xx-constants";
-import { Queue } from "./queue";
+import { Queue, TaskValue, Task, Status } from "./queue";
 import * as Util from "util";
 
-export class GT521Packet {
+export class GT521Packet implements TaskValue {
     buffer: Buffer;
     valid: boolean;
     kind!: PacketKind;
+    task?: Task;
     constructor(buffer: Buffer) {
         this.buffer = buffer;
         this.valid = this.checkCRC();
@@ -78,7 +79,7 @@ export class CommandPacket extends GT521Packet {
     promise: Promise<any>;
     satisfied: boolean;
     timeout: number;
-    private _timeout: NodeJS.Timer;
+    private _timeout: NodeJS.Timer | null;
     private _resolver!: (value?: {} | PromiseLike<{}> | undefined) => void;
     private _rejecter!: (reason?: any) => void;
 
@@ -117,6 +118,11 @@ export class CommandPacket extends GT521Packet {
             self._resolver = resolve;
             self._rejecter = reject;
         });
+        this._timeout = null;
+    }
+
+    startTimeout() {
+        var self = this;
         this._timeout = setTimeout(function () {
             self.reject(new Error("Packet timed out."));
         }, this.timeout);
@@ -166,6 +172,9 @@ export class CommandPacket extends GT521Packet {
         }
         if (this.responseType == packet.kind) {
             this.resolve(this);
+            if (this.task) {
+                this.task.status = Status.Finished
+            }
             return CommandPacketStatus.Successful;
         } else {
             return CommandPacketStatus.Pending;
@@ -200,7 +209,7 @@ export class CommandPacket extends GT521Packet {
             responseType: this.responseType,
             timeout: this.timeout,
             responsePacket: this.responsePacket,
-            dataPacket:this.dataPacket
+            dataPacket: this.dataPacket
         }
 
         return " Command Packet " + Util.format(printable);

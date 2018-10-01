@@ -47,9 +47,10 @@ export class FingerPrintReader {
         this.store = new FingerPrintStore();
         this.path = path;
         this.commandQueue = new Queue(this._taskProcessor.bind(this));
+        this.commandQueue.start();
         var baudRate = this.store.get('baudRate', 9600);
         this.log.info("BaudRate: ", baudRate);
-        this.baudRate = 115200;
+        this.baudRate = 9600;
         this.desiredBaudRate = desiredBaudRate || 115200;
 
         this.otherBaudRates = SupportedBaudRates.filter(br => br !== baudRate);
@@ -242,6 +243,8 @@ export class FingerPrintReader {
         switch (task.status) {
             case Status.Queued:
                 this._send(cmd);
+                cmd.startTimeout();
+                this.log.info("Sent Command", cmd);
                 task.status = Status.Started;
                 break;
             case Status.Finished:

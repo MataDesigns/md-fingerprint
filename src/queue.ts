@@ -19,13 +19,20 @@ export class Task {
      * The status of the task.
      */
     status: Status;
-    constructor(value?: any) {
+    constructor(value?: TaskValue) {
         this.id = Task.globalId;
         Task.globalId += 1;
 
         this.value = value
         this.status = Status.Queued
+        if (value) {
+            value.task = this;
+        }
     }
+}
+
+export interface TaskValue {
+    task?: Task
 }
 
 /**
